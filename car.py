@@ -16,7 +16,8 @@ def random_car(lenght = 16):
             "torque": 50.0,
             "enable_motor": True,
             "damping_ratio": 0.7,
-        }  for i in range(int(round(random() * 6)))
+        }  for i in range(2)
+        # for i in range(1, int(round(random() * 6)))
     ]
     return ch_verts, wheels_data
 
@@ -26,7 +27,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
     chassis_vertices = sorted(chassis_vertices, key=lambda cord: cord[0])
     shapes = [b2PolygonShape(vertices=[chassis_vertices[i], chassis_vertices[i+1],
         chassis_vertices[i+2], chassis_vertices[i+3]]) for i in range(0, len(chassis_vertices) - 2, 2)]
-
+    
     chassis = world.CreateDynamicBody(
         position=(0, 10),
         shapes=shapes,
@@ -56,7 +57,9 @@ def create_vehicle(world, chassis_vertices, wheels_data):
 
         wheels.append(wheel)
         springs.append(spring)
-        return chassis
+        if chassis == None or wheels == None or springs == None:
+            print("error", flush=True)
+        return chassis, wheels, springs
 
 def basic_car():
     ch_verts = [
