@@ -1,53 +1,44 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from Box2D.examples.framework import (Framework, Keys, main)
-from Box2D.examples.bridge import create_bridge
+from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
+                   b2_pi)
 from math import sqrt
 from random import random
 
-from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
-                   b2_pi)
+def random_car(lenght = 16):
+    ch_verts = [(random()*5.0 - 2.5, random()*5.0 - 2.5)
+                        for i in range(lenght)]
+    wheels_data = [
+        {
+            "position": (random()*5.0 - 2.5, 10 + random()*5.0 - 2.5),
+            "radius": 0.5,
+            "density": 1.0,
+            "wheel_axis": (0.0, 1.0),
+            "speed": -10.0,
+            "torque": 50.0,
+            "enable_motor": True,
+            "damping_ratio": 0.7,
+        }  for i in range(int(round(random() * 6)))
+    ]
+    return ch_verts, wheels_data
 
-def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
-               wheel_friction=0.9, scale=(2.0, 1.0), chassis_vertices=None,
-               wheel_axis=(1.0, 1.0), wheel_torques=[200.0, 100.0],
-               wheel_drives=[True, False], hz=4.0, zeta=0.7, **kwargs):
-    """
-    """
-    x_offset, y_offset = offset
-    scale_x, scale_y = scale
-    if chassis_vertices is None:
-        chassis_vertices = [
-            (-1.5, -0.5),
-            (1.5, -0.5),
-            (1.5, 0.0),
-            (0.0, 0.9),
-            (-1.15, 0.9),
-            (-1.5, 0.2),
-        ]
+    
 
-    chassis_vertices = [(scale_x * x, scale_y * y)
-                        for x, y in chassis_vertices]
-    radius_scale = sqrt(scale_x ** 2 + scale_y ** 2)
-    wheel_radius *= radius_scale
+def create_vehicle(world, chassis_vertices, wheels_data):
+    chassis_vertices = sorted(chassis_vertices, key=lambda cord: cord[0])
+    shapes = [b2PolygonShape(vertices=[chassis_vertices[i], chassis_vertices[i+1],
+        chassis_vertices[i+2], chassis_vertices[i+3]]) for i in range(0, len(chassis_vertices) - 2, 2)]
 
     chassis = world.CreateDynamicBody(
-        position=(x_offset, y_offset),
-        fixtures=b2FixtureDef(
-            shape=b2PolygonShape(vertices=chassis_vertices),
-            density=density,
-        )
+        position=(0, 10),
+        shapes=shapes,
+        shapeFixture=b2FixtureDef(density=1),
     )
-
     wheels, springs = [], []
-    wheel_xs = [-wheel_separation * scale_x /
-                2.0, wheel_separation * scale_x / 2.0]
-    for x, torque, drive in zip(wheel_xs, wheel_torques, wheel_drives):
+    for wheel_spec in wheels_data:
         wheel = world.CreateDynamicBody(
-            position=(x_offset + x, y_offset - wheel_radius),
+            position=wheel_spec["position"],
             fixtures=b2FixtureDef(
-                shape=b2CircleShape(radius=wheel_radius),
-                density=density,
+                shape=b2CircleShape(radius=wheel_spec["radius"]),
+                density=wheel_spec["density"],
             )
         )
 
@@ -55,38 +46,48 @@ def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
             bodyA=chassis,
             bodyB=wheel,
             anchor=wheel.position,
-            axis=wheel_axis,
-            motorSpeed=0.0,
-            maxMotorTorque=torque,
-            enableMotor=drive,
-            frequencyHz=hz,
-            dampingRatio=zeta
+            axis=wheel_spec["wheel_axis"],
+            motorSpeed=wheel_spec["speed"],
+            maxMotorTorque=wheel_spec["torque"],
+            enableMotor=wheel_spec["enable_motor"],
+            dampingRatio=wheel_spec["damping_ratio"],
+            frequencyHz=4.0
         )
 
         wheels.append(wheel)
         springs.append(spring)
+        return chassis
 
-    return chassis, wheels, springs
+def basic_car():
+    ch_verts = [
+        (1.0, 0.0),
+        (0.5, 0.55),
+        (1.0, -1.0),
+        (-1.0, -1.0),
+        (-1.0, 0.0),
+        (1.0, 0.0),
+    ]
 
-
-# class Simulation():
-class Simulation(Framework):
-    def __init__(self):
-        super().__init__()
-        # world = b2World()
-        world = self.world
-        old_height = 0
-        for i in range(0, 200, 10):
-            height = random() * 10
-            element = b2EdgeShape(vertices=[(-10 + i, old_height), (i, height)])
-            world.CreateStaticBody(shapes=element)
-            old_height = height
-        body = world.CreateDynamicBody(position=(0,4))
-        body.CreatePolygonFixture(box=(1,1), density=1, friction=0.3)
-        car, wheels, springs = create_car(self.world, offset=(
-            0.0, 10.0), wheel_radius=0.8, wheel_separation=6.0, scale=(1, 1))
-
-
-if __name__ == "__main__":
-    main(Simulation)
-    # s = Simulation()
+    wheels_data = [
+        {
+            "position": (1.5, 8.7),
+            "radius": 0.5,
+            "density": 1.0,
+            "wheel_axis": (0.0, 1.0),
+            "speed": -10.0,
+            "torque": 50.0,
+            "enable_motor": True,
+            "damping_ratio": 0.7,
+        },
+        {
+            "position": (-1.5, 8.7),
+            "radius": 0.5,
+            "density": 1.0,
+            "wheel_axis": (0.0, 1.0),
+            "speed": -10.0,
+            "torque": 50.0,
+            "enable_motor": True,
+            "damping_ratio": 0.7,
+        },
+    ]
+    return ch_verts, wheels_data
