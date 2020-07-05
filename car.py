@@ -1,5 +1,5 @@
 from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
-                   b2_pi)
+                   b2_pi, b2Filter)
 from math import sqrt
 from random import random
 
@@ -31,7 +31,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
     chassis = world.CreateDynamicBody(
         position=(0, 10),
         shapes=shapes,
-        shapeFixture=b2FixtureDef(density=1),
+        shapeFixture=b2FixtureDef(density=1, filter=b2Filter(groupIndex= -1)),
     )
     wheels, springs = [], []
     for wheel_spec in wheels_data:
@@ -40,6 +40,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
             fixtures=b2FixtureDef(
                 shape=b2CircleShape(radius=wheel_spec["radius"]),
                 density=wheel_spec["density"],
+                filter=b2Filter(groupIndex= -1),
             )
         )
 
@@ -57,9 +58,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
 
         wheels.append(wheel)
         springs.append(spring)
-        if chassis == None or wheels == None or springs == None:
-            print("error", flush=True)
-        return chassis, wheels, springs
+    return chassis, wheels, springs
 
 def basic_car():
     ch_verts = [
