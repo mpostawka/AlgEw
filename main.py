@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 from Box2D.examples.framework import (Framework, Keys, main)
 from Box2D.examples.bridge import create_bridge
+import matplotlib.pyplot as plt
 from math import sqrt
 from random import random
 import numpy as np
-import itertools
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
@@ -14,52 +14,77 @@ import time
 from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi)
 
-from car import (basic_car, random_car, create_vehicle)
-from terrain import gen_terrain
+from car import (VERTICES_COUNT, PARAMETERS_COUNT, WHEEL_COUNT,
+    basic_car, random_car, create_vehicle, code_to_car, car_to_code, is_car_valid)
+from terrain import (gen_terrain, parse_terrain)
+from utils import save_car
+from genetic import es
+from simulation import test
 
 
+# TODO: true value in code_to_car
 
-# class Simulation(Framework):
-class Simulation():
-    quantity = 1
-    max_scores = np.zeros(quantity)
-    iter_number = 0
-    def __init__(self, terrain=None):
-        # super().__init__()
-        # world = self.world
-        self.world = world = b2World()
-        if terrain == None:
-            terrain = gen_terrain()
-        world.CreateStaticBody(shapes=terrain)
-        
-        # body = world.CreateDynamicBody(position=(0, 4))
-        # body.CreatePolygonFixture(box=(1,1), density=1, friction=0.3)
-        self.cars = [create_vehicle(world, *random_car()) for i in range(self.quantity)]
+def get_objective_func(terrain):
+    def objective_func(P):
+        scores = []
+        for code in P:
+            car = code_to_car(code)
+            if is_car_valid(car):
+                scores.append(test(car, terrain))
+            else:
+                scores.append(-10.0)
+        return np.array(scores)
+    return objective_func
 
+def perform_evolution(objective_func):
+    d = VERTICES_COUNT * 2 + PARAMETERS_COUNT * WHEEL_COUNT
+    N = 10
+    T = 10
+    best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas = es(
+        objective_func, d, N, T, 2*N, 2, 1.0, 1/np.sqrt(2*d), 1/np.sqrt(2*np.sqrt(d)), 10)
+    return best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas
 
+def print_logs(args):
+    best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas = args
+    plt.figure(figsize=(18, 4))
+    plt.plot(history_objective_values[:, 0], 'r-')
+    plt.plot(history_objective_values[:, 1], 'r-')
+    plt.plot(history_objective_values[:, 2], 'r-')
+    plt.xlabel('iteration')
+    plt.ylabel('objective function value')
+    plt.title('min/avg/max objective function values')
+    plt.show()
 
-    def Step(self, settings):
-        # super().Step(settings)
-        self.world.Step(1.0/60.0, 8, 3)
-        for i, car in enumerate(self.cars):
-            score = car[0].position.x
-            if score > self.max_scores[i]:
-                self.max_scores[i] = score
-        self.iter_number += 1
-
-
-def test(terrain):
-    s = Simulation(terrain)
-    for time in range(60*100):
-        s.Step(None)
-    max_scores = s.max_scores
-    # del s
-    return (max_scores, cars)
+    plt.figure(figsize=(18, 4))
+    plt.plot(history_best_sigmas, 'r-')
+    plt.xlabel('iteration')
+    plt.ylabel('sigma value')
+    plt.title('best sigmas')
+    plt.show()
 
 if __name__ == "__main__":
-    # main(Simulation)
-    start = time.time()
-    terrain = gen_terrain()
-    results = [test(terrain) for i in tqdm(range(100))]
-    print("Elapsed: ", time.time() - start)
-    print("Best: ", max(results))
+    terrain, terrain_spec = gen_terrain()
+    result = perform_evolution(get_objective_func(terrain))
+    car = code_to_car(result[1])
+    print(result)
+    save_car(car, terrain_spec)
+    print_logs(result)
+
+
+
+
+
+
+
+
+
+
+    # start = time.time()
+    # terrain, terrain_spec = gen_terrain()
+    # results = [test(terrain) for i in tqdm(range(1500))]
+    # scores, cars = zip(*results)
+    # I = np.argmax(scores)
+    # print("Best: ", scores[I])
+    # print("Cars:", cars[I])
+    # print("Elapsed: ", time.time() - start)
+    # save_car(cars[I], terrain_spec)

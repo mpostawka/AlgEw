@@ -1,21 +1,29 @@
 from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi, b2Filter)
-from math import sqrt
+import math
 from random import random
+import numpy as np
+
+VERTICES_COUNT = 6
+PARAMETERS_COUNT = 10
+WHEEL_COUNT = 2
+PARAMETERS = ["position_x", "position_y", "radius", "density", "wheel_axis_x", "wheel_axis_y", "speed", "torque", "enable_motor", "damping_ratio"]
 
 def random_car(lenght = 16):
     ch_verts = [(random()*5.0 - 2.5, random()*5.0 - 2.5)
                         for i in range(lenght)]
     wheels_data = [
         {
-            "position": (random()*5.0 - 2.5, 10 + random()*5.0 - 2.5),
-            "radius": 0.5,
-            "density": 1.0,
-            "wheel_axis": (0.0, 1.0),
-            "speed": -10.0,
-            "torque": 50.0,
-            "enable_motor": True,
-            "damping_ratio": 0.7,
+            "position_x": random()*5.0 - 2.5,
+            "position_y": 10 + random()*5.0 - 2.5,
+            "radius": random()*2.5,
+            "density": random()* 5.0,
+            "wheel_axis_x": random(),
+            "wheel_axis_y": random(),
+            "speed": random() * 200.0 - 100.0,
+            "torque": random() * 200.0 - 100.0,
+            "enable_motor": random() > 0.5,
+            "damping_ratio": random(),
         }  for i in range(2)
         # for i in range(1, int(round(random() * 6)))
     ]
@@ -36,7 +44,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
     wheels, springs = [], []
     for wheel_spec in wheels_data:
         wheel = world.CreateDynamicBody(
-            position=wheel_spec["position"],
+            position=(wheel_spec["position_x"], wheel_spec["position_y"]),
             fixtures=b2FixtureDef(
                 shape=b2CircleShape(radius=wheel_spec["radius"]),
                 density=wheel_spec["density"],
@@ -48,7 +56,7 @@ def create_vehicle(world, chassis_vertices, wheels_data):
             bodyA=chassis,
             bodyB=wheel,
             anchor=wheel.position,
-            axis=wheel_spec["wheel_axis"],
+            axis=(wheel_spec["wheel_axis_x"], wheel_spec["wheel_axis_y"]),
             motorSpeed=wheel_spec["speed"],
             maxMotorTorque=wheel_spec["torque"],
             enableMotor=wheel_spec["enable_motor"],
@@ -72,20 +80,24 @@ def basic_car():
 
     wheels_data = [
         {
-            "position": (1.5, 8.7),
+            "position_x": 1.5,
+            "position_y": 8.7,
             "radius": 0.5,
             "density": 1.0,
-            "wheel_axis": (0.0, 1.0),
+            "wheel_axis_x": 0.0,
+            "wheel_axis_y": 1.0,
             "speed": -10.0,
             "torque": 50.0,
             "enable_motor": True,
             "damping_ratio": 0.7,
         },
         {
-            "position": (-1.5, 8.7),
+            "position_x": -1.5,
+            "position_y": 8.7,
             "radius": 0.5,
             "density": 1.0,
-            "wheel_axis": (0.0, 1.0),
+            "wheel_axis_x": 0.0,
+            "wheel_axis_y": 1.0,
             "speed": -10.0,
             "torque": 50.0,
             "enable_motor": True,
@@ -93,3 +105,52 @@ def basic_car():
         },
     ]
     return ch_verts, wheels_data
+
+def car_to_code(car):
+    ch_verts, wheels_data = car
+    return np.append(
+        np.array(ch_verts).reshape(len(ch_verts) * 2),
+        [[
+            wheels_data[i][parameter] for parameter in PARAMETERS
+        ] for i in range(WHEEL_COUNT)]
+    )
+    
+def code_to_car(code):
+    vertices = code[:VERTICES_COUNT * 2]
+    ch_verts = [(vertices[i], vertices[i+1]) for i in range(0, VERTICES_COUNT * 2, 2)]
+    data = code[VERTICES_COUNT * 2:]
+    wheels_data = []
+    for wheel_offset in range(0, len(data), PARAMETERS_COUNT):
+        wheel = dict()
+        for i, parameter in enumerate(PARAMETERS):
+            wheel[parameter] = data[wheel_offset + i]
+        # wheel["enable_motor"] = wheel["enable_motor"] > 0
+        wheel["enable_motor"] = True
+        wheels_data.append(wheel)
+    return ch_verts, wheels_data
+
+def is_car_valid(car):
+    limits = {
+            "position_x": (-7, 7),
+            "position_y": (10, 20),
+            "radius": (0.1, 7),
+            "density": (0.1, 5.0),
+            "wheel_axis_x": (-7, 7),
+            "wheel_axis_y": (10, 20),
+            "speed": (-100.0, 100.0),
+            "torque": (-200.0, 200.0),
+            "enable_motor": (-200.0, 200.0),
+            "damping_ratio": (0.1, 0.9),
+    }
+    ch_verts, wheels_data = car
+
+    for x, y in ch_verts:
+        if abs(x) > 5.0 or abs(y) > 5.0:
+            return False
+
+    for wheel in wheels_data:
+        for parameter, value in limits.items():
+            if wheel[parameter] < value[0] or wheel[parameter] > value[1]:
+                return False
+    
+    return True
