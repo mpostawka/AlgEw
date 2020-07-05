@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-from car import basic_car
+from car import basic_car, is_car_valid, code_to_car
 
 def es(objective_function, chromosome_length, population_size, number_of_iterations, number_of_offspring, number_of_parents, sigma, tau, tau_0, log_frequency=1):
 
@@ -12,7 +12,15 @@ def es(objective_function, chromosome_length, population_size, number_of_iterati
     log_best_sigmas = np.empty((number_of_iterations, chromosome_length))
 
     # generating an initial population
-    current_population_solutions = np.random.rand(population_size, chromosome_length)
+    current_population_solutions = sigma * np.random.rand(population_size, chromosome_length)
+    for i in tqdm(range(population_size)):
+        for j in range(3000):
+            code = 5.0 * sigma * np.random.rand(1,chromosome_length) - sigma / 2.0
+            car = code_to_car(code[0])
+            if is_car_valid(car):
+                print("whooho")
+                break
+        current_population_solutions[i] = code[0]
     current_population_sigmas = sigma * np.ones((population_size, chromosome_length))
 
     # evaluating the objective function on the current population

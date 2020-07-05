@@ -37,10 +37,10 @@ class Simulation():
         # else:
         #     self.cars_spec = super_car
         #     # self.cars_spec = [random_car() for i in range(self.quantity)]
-        #     self.cars = [create_vehicle(world, *car) for car in self.cars_spec]
+        #     self,.cars = [create_vehicle(world, *car) for car in self.cars_spec]
 
     def Step(self, settings):
-        self.world.Step(1.0/60.0, 10, 10)
+        self.world.Step(1.0/180.0, 30, 30)
         for i, car in enumerate(self.cars):
             score = car[i].position.x
             if score > self.max_scores[i]:

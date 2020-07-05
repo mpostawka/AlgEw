@@ -73,7 +73,7 @@ def basic_car():
         (1.0, 0.0),
         (0.5, 0.55),
         (1.0, -1.0),
-        (-1.0, -1.0),
+        (-1.0, -1.0),children_population_solutions
         (-1.0, 0.0),
         (1.0, 0.0),
     ]
@@ -126,24 +126,36 @@ def code_to_car(code):
             wheel[parameter] = data[wheel_offset + i]
         # wheel["enable_motor"] = wheel["enable_motor"] > 0
         wheel["enable_motor"] = True
+        wheel["position_y"] += 15
+        wheel["wheel_axis_x"] = 0.0
+        wheel["wheel_axis_y"] = 1.0
+        wheel["speed"] = -20.0
+        wheel["torque"] += 50.0
+
         wheels_data.append(wheel)
     return ch_verts, wheels_data
 
 def is_car_valid(car):
     limits = {
             "position_x": (-7, 7),
-            "position_y": (10, 20),
-            "radius": (0.1, 7),
-            "density": (0.1, 5.0),
-            "wheel_axis_x": (-7, 7),
-            "wheel_axis_y": (10, 20),
+            "position_y": (10, 20), 
+            "radius": (0.2, 4.0),
+            "density": (0.3, 5.0),
+            "wheel_axis_x": (-1, 1),
+            "wheel_axis_y": (-1, 1),
             "speed": (-100.0, 100.0),
-            "torque": (-200.0, 200.0),
-            "enable_motor": (-200.0, 200.0),
-            "damping_ratio": (0.1, 0.9),
+            "torque": (0.0, 200.0),
+            "enable_motor": (-10.0, 10.0),
+            "damping_ratio": (0.3, 0.9),
     }
     ch_verts, wheels_data = car
 
+    for i, (x1, y1) in enumerate(ch_verts):
+        for j, (x2, y2) in enumerate(ch_verts):
+            if i != j:
+                if math.sqrt((x1 - x2)**2 + (y1 - y2)**2) < 0.1:
+                    return False
+    
     for x, y in ch_verts:
         if abs(x) > 5.0 or abs(y) > 5.0:
             return False

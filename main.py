@@ -17,7 +17,7 @@ from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonS
 from car import (VERTICES_COUNT, PARAMETERS_COUNT, WHEEL_COUNT,
     basic_car, random_car, create_vehicle, code_to_car, car_to_code, is_car_valid)
 from terrain import (gen_terrain, parse_terrain)
-from utils import save_car
+from utils import (save_car, save_terrain)
 from genetic import es
 from simulation import test
 
@@ -27,7 +27,7 @@ from simulation import test
 def get_objective_func(terrain):
     def objective_func(P):
         scores = []
-        for code in P:
+        for code in tqdm(P):
             car = code_to_car(code)
             if is_car_valid(car):
                 scores.append(test(car, terrain))
@@ -38,8 +38,8 @@ def get_objective_func(terrain):
 
 def perform_evolution(objective_func):
     d = VERTICES_COUNT * 2 + PARAMETERS_COUNT * WHEEL_COUNT
-    N = 10
-    T = 10
+    N = 500
+    T = 15
     best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas = es(
         objective_func, d, N, T, 2*N, 2, 1.0, 1/np.sqrt(2*d), 1/np.sqrt(2*np.sqrt(d)), 10)
     return best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas
@@ -59,7 +59,7 @@ def print_logs(args):
     plt.plot(history_best_sigmas, 'r-')
     plt.xlabel('iteration')
     plt.ylabel('sigma value')
-    plt.title('best sigmas')
+    plt.title('best sigmas'), terrain_spec
     plt.show()
 
 if __name__ == "__main__":
@@ -67,7 +67,8 @@ if __name__ == "__main__":
     result = perform_evolution(get_objective_func(terrain))
     car = code_to_car(result[1])
     print(result)
-    save_car(car, terrain_spec)
+    save_car(car)
+    save_terrain(terrain_spec)
     print_logs(result)
 
 

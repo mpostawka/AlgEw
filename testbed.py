@@ -10,8 +10,7 @@ from Box2D import (b2World, b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonS
                    b2_pi)
 
 from car import (basic_car, random_car, create_vehicle)
-from terrain import gen_terrain
-from utils import parse_terrain
+from terrain import (gen_terrain, parse_terrain)
 
 
 class Simulation(Framework):
@@ -25,16 +24,17 @@ class Simulation(Framework):
         world = self.world
         if terrain == None:
             try:
-                with open("save.json") as f:
-                    save = json.load(f)
-                terrain = parse_terrain(save['terrain'])
-                super_car = save["car"]
+                with open("saved_terrain.json") as f:
+                    terrain = parse_terrain(json.load(f))
+                with open("saved_car.json") as f:
+                    super_car = json.load(f)
                 print("Terrain and Car loaded")
+                print(super_car[0])
             except (IOError, json.JSONDecodeError):
                 terrain = gen_terrain()
         world.CreateStaticBody(shapes=terrain)
 
-        self.cars_spec = super_car
+        self.cars_spec = [(super_car[0], super_car[1])]
         self.cars = [create_vehicle(world, *car) for car in self.cars_spec]
 
     def Step(self, settings):
