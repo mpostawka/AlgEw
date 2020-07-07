@@ -19,29 +19,19 @@ from car import (VERTICES_COUNT, PARAMETERS_COUNT, WHEEL_COUNT,
 from terrain import (gen_terrain, parse_terrain)
 from utils import (save_car, save_terrain)
 from genetic import es
-from simulation import test
+from simulation import (test, get_objective_func)
 
 
 # TODO: true value in code_to_car
 
-def get_objective_func(terrain):
-    def objective_func(P):
-        scores = []
-        for code in tqdm(P):
-            car = code_to_car(code)
-            if is_car_valid(car):
-                scores.append(test(car, terrain))
-            else:
-                scores.append(-10.0)
-        return np.array(scores)
-    return objective_func
+
 
 def perform_evolution(objective_func):
     d = VERTICES_COUNT * 2 + PARAMETERS_COUNT * WHEEL_COUNT
-    N = 500
-    T = 15
+    N = 1500
+    T = 30
     best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas = es(
-        objective_func, d, N, T, 2*N, 2, 1.0, 1/np.sqrt(2*d), 1/np.sqrt(2*np.sqrt(d)), 10)
+        objective_func, d, N, T, 2*N, 2, 0.2, 1/np.sqrt(2*d), 1/np.sqrt(2*np.sqrt(d)), 10)
     return best_objective_value, best_chromosome, history_objective_values, history_best_chromosome, history_best_sigmas
 
 def print_logs(args):

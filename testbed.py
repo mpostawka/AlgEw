@@ -17,6 +17,7 @@ class Simulation(Framework):
     quantity = 1
     max_scores = np.zeros(quantity)
     iter_number = 0
+    last_x = 0
 
     def __init__(self, terrain=None):
         self.max_scores = np.zeros(self.quantity)
@@ -39,6 +40,9 @@ class Simulation(Framework):
 
     def Step(self, settings):
         super().Step(settings)
+        self.viewCenter = (self.cars[0][0].position.x, 20)
+        print(self.last_x - self.cars[0][0].position.x)
+        self.last_x = self.cars[0][0].position.x
 
 if __name__ == "__main__":
     main(Simulation)

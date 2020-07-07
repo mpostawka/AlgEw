@@ -4,32 +4,29 @@ import math
 from random import random
 import numpy as np
 
-VERTICES_COUNT = 6
+VERTICES_COUNT = 12
 PARAMETERS_COUNT = 10
-WHEEL_COUNT = 2
+WHEEL_COUNT = 3
 PARAMETERS = ["position_x", "position_y", "radius", "density", "wheel_axis_x", "wheel_axis_y", "speed", "torque", "enable_motor", "damping_ratio"]
 
-def random_car(lenght = 16):
-    ch_verts = [(random()*5.0 - 2.5, random()*5.0 - 2.5)
-                        for i in range(lenght)]
+def random_car():
+    ch_verts = [(random()*10.0 - 5.0, random()*10.0 - 5.0)
+                        for i in range(VERTICES_COUNT)]
     wheels_data = [
         {
-            "position_x": random()*5.0 - 2.5,
-            "position_y": 10 + random()*5.0 - 2.5,
-            "radius": random()*2.5,
-            "density": random()* 5.0,
-            "wheel_axis_x": random(),
-            "wheel_axis_y": random(),
-            "speed": random() * 200.0 - 100.0,
-            "torque": random() * 200.0 - 100.0,
-            "enable_motor": random() > 0.5,
-            "damping_ratio": random(),
-        }  for i in range(2)
-        # for i in range(1, int(round(random() * 6)))
+            "position_x": (random() - 0.5) * 14.0,
+            "position_y": 10 + random() * 10.0,
+            "radius": 0.2 + random() * 3.8,
+            "density": 0.3 + random() * 4.7,
+            "wheel_axis_x": (random() - 0.5) * 2.0,
+            "wheel_axis_y": (random() - 0.5) * 2.0,
+            "speed": (random() - 0.5) * 200.0,
+            "torque": random() * 200.0 ,
+            "enable_motor": (random() - 0.5) * 2.0,
+            "damping_ratio": 0.3 + random() * 0.6,
+        }  for i in range(WHEEL_COUNT)
     ]
     return ch_verts, wheels_data
-
-    
 
 def create_vehicle(world, chassis_vertices, wheels_data):
     chassis_vertices = sorted(chassis_vertices, key=lambda cord: cord[0])
@@ -73,7 +70,7 @@ def basic_car():
         (1.0, 0.0),
         (0.5, 0.55),
         (1.0, -1.0),
-        (-1.0, -1.0),children_population_solutions
+        (-1.0, -1.0),
         (-1.0, 0.0),
         (1.0, 0.0),
     ]
@@ -124,13 +121,26 @@ def code_to_car(code):
         wheel = dict()
         for i, parameter in enumerate(PARAMETERS):
             wheel[parameter] = data[wheel_offset + i]
-        # wheel["enable_motor"] = wheel["enable_motor"] > 0
-        wheel["enable_motor"] = True
-        wheel["position_y"] += 15
-        wheel["wheel_axis_x"] = 0.0
-        wheel["wheel_axis_y"] = 1.0
-        wheel["speed"] = -20.0
-        wheel["torque"] += 50.0
+        if wheel["enable_motor"] > 0:
+            wheel["enable_motor"] = True
+        else:
+            wheel["enable_motor"] = False
+        # wheel["position_y"] += 15
+        # wheel["wheel_axis_x"] = 0.0
+        # wheel["wheel_axis_y"] = 1.0
+        # wheel["speed"] = -wheel["speed"]
+        # wheel["torque"] += 50.0
+
+        # wheel["position_x"] += -7,
+        # wheel["position_y"] += 10, 
+        # wheel["radius"] += 0.2,
+        # wheel["density"] += 0.3,
+        # wheel["wheel_axis_x"] += -1,
+        # wheel["wheel_axis_y"] += -1,
+        # wheel["speed"] += -100.0,
+        # wheel["enable_motor"] += -10.0,
+        # wheel["damping_ratio"] += 0.3,
+
 
         wheels_data.append(wheel)
     return ch_verts, wheels_data

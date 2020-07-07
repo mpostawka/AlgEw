@@ -1,6 +1,8 @@
 import numpy as np
 from tqdm import tqdm
-from car import basic_car, is_car_valid, code_to_car
+from car import basic_car, is_car_valid, code_to_car, car_to_code, random_car
+from simulation import get_objective_func
+from terrain import gen_terrain
 
 def es(objective_function, chromosome_length, population_size, number_of_iterations, number_of_offspring, number_of_parents, sigma, tau, tau_0, log_frequency=1):
 
@@ -14,19 +16,22 @@ def es(objective_function, chromosome_length, population_size, number_of_iterati
     # generating an initial population
     current_population_solutions = sigma * np.random.rand(population_size, chromosome_length)
     for i in tqdm(range(population_size)):
-        for j in range(3000):
-            code = 5.0 * sigma * np.random.rand(1,chromosome_length) - sigma / 2.0
-            car = code_to_car(code[0])
+        for j in range(10000):
+            # code = 35.0 * (sigma * np.random.rand(1,chromosome_length) - sigma / 2.0)
+            # car = code_to_car(code[0])
+            car = random_car()
             if is_car_valid(car):
-                print("whooho")
+                print("The generated car is valid")
                 break
-        current_population_solutions[i] = code[0]
+        current_population_solutions[i] = car_to_code(car)
     current_population_sigmas = sigma * np.ones((population_size, chromosome_length))
 
     # evaluating the objective function on the current population
     current_population_objective_values = objective_function(current_population_solutions)
 
     for t in tqdm(range(number_of_iterations)):
+        # regenerate terrain
+        objective_function = get_objective_func(gen_terrain()[0])
 
         # selecting the parent indices by the roulette wheel method
         fitness_values = current_population_objective_values - current_population_objective_values.min()
@@ -45,7 +50,7 @@ def es(objective_function, chromosome_length, population_size, number_of_iterati
 
         # mutating the children population by adding random gaussian noise
         children_population_sigmas = children_population_sigmas * np.exp(tau * np.random.randn(number_of_offspring, chromosome_length) + tau_0 * np.random.randn(number_of_offspring, 1))
-        children_population_solutions = children_population_solutions + children_population_sigmas * np.random.randn(number_of_offspring, chromosome_length)
+        children_population_solutions = children_population_solutions + children_population_sigmas * np.random.randn(number_of_offspring, chromosome_length) - children_population_sigmas / 2.0
 
         # evaluating the objective function on the children population
         children_population_objective_values = objective_function(children_population_solutions)
